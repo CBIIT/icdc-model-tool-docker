@@ -1,0 +1,129 @@
+#!/usr/bin/env perl
+use v5.10;
+use Getopt::Long qw/:config auto_abbrev auto_version auto_help bundling/;
+use Scalar::Util qw/looks_like_number/;
+use IPC::Run qw/run/;
+use File::Spec;
+use File::Copy::Recursive qw/rcopy/;
+use File::Temp;
+use strict;
+use warnings;
+
+our $VERSION="0.1";
+
+# ENV vars
+# MODEL_TOOL_KEEP_TMP - keep tmp directory (default: clean up)
+# MODEL_TOOL_DOCKER - docker image and tag to pull
+# MODEL_TOOL_KEEP_CONTAINER - keep docker container (default: discard)
+# DOCKER_CMD - system's docker command (defaul: 'docker')
+
+my $MODEL_TOOL_KEEP_TMP = $ENV{MODEL_TOOL_KEEP_TMP} // 0;
+my $MODEL_TOOL_DOCKER = $ENV{MODEL_TOOL_DOCKER} // "maj1/dayjob:icdc-model-tool-app";
+my $MODEL_TOOL_TMP = File::Temp->newdir("ICDC_XXXX", CLEANUP=>!$MODEL_TOOL_KEEP_TMP) or die "Can't create temp directory: $!";
+
+my $DOCKER = $ENV{DOCKER_CMD} // 'docker';
+my %OPT_SPEC = (
+  'schemas|s=s' => \&record_options,
+  'graph|g=s' => \&record_options,
+  'bigjson|j|b=s' => \&record_options,
+  'dir|d=s' => \&record_options,
+  'verbose|v+' => \&record_options,
+  'warn|W' => \&record_options,
+  'dry-run|dry_run' => \&record_options,
+  'all-nodes|all_nodes|a!' => \&record_options,
+ );
+my @OUTPUT_OPTS = qw/schemas graph bigjson/;
+
+my %OPT;
+my %OPT_DOCKER;
+my @ARGD;
+
+# Collect options and arguments
+
+GetOptions (%OPT_SPEC) or die "Program options are borked.";
+
+%OPT_DOCKER = %OPT;
+
+# Map files and file arguments to Docker volume
+
+for (keys %OPT_DOCKER) {
+  my $v = $OPT_DOCKER{$_};
+  my $munge_v = $v;
+  $munge_v =~ s|/|__|g;
+  $munge_v =~ s|\.|~|g;
+  unless (looks_like_number $v) {
+    if ((-e $v) && !(-d $v)) {
+      rcopy($v, File::Spec->catfile($MODEL_TOOL_TMP, $munge_v)) or die "copy: for '$v', $!";
+    }
+    $OPT_DOCKER{$_} = File::Spec->catfile('wrk',$munge_v);
+  }
+}
+
+for my $a (@ARGV) {
+  my $munge_a = $a;
+  $munge_a =~ s|/|__|g;
+  $munge_a =~ s|\.|~|g;
+  if (-e $a && ! -d $a) {
+    rcopy($a, File::Spec->catfile($MODEL_TOOL_TMP, $munge_a)) or die "copy: for '$a', $!";
+  }
+  push @ARGD, File::Spec->catfile('wrk',$munge_a);
+}
+
+# build docker run command
+
+my @cmd = ($DOCKER,
+	   'run',
+	   '--name', $MODEL_TOOL_TMP,
+	   '-t',
+	   '-v',
+	   File::Spec->rel2abs($MODEL_TOOL_TMP).':/opns/wrk',
+	   $MODEL_TOOL_DOCKER);
+
+for (keys %OPT_DOCKER) {
+  if (looks_like_number $OPT_DOCKER{$_}) {
+    push @cmd, ("--$_") x $OPT_DOCKER{$_};
+  }
+  else {
+    push @cmd, "--$_", $OPT_DOCKER{$_};
+  }
+}
+push @cmd, @ARGD;
+
+# run docker run
+
+run \@cmd;
+
+# return outputs to expected places
+
+for (@OUTPUT_OPTS) {
+  my $src = $OPT_DOCKER{$_};
+  my $dst = $OPT{$_};
+  next unless $src && $dst;
+  $src =~ s/\bwrk\b/$MODEL_TOOL_TMP/;
+  rcopy( $src, $dst );
+}
+
+END {
+  # clean up container
+  unless ($ENV{MODEL_TOOL_KEEP_CONTAINER}) {
+    run [$DOCKER, 'rm', $MODEL_TOOL_TMP] or warn "model-tool-d cleanup: $?";
+  }
+}
+
+1;
+
+sub record_options {
+  my ($name, $value) = @_;
+  if (defined $OPT{$name}) {
+    if (looks_like_number $OPT{$name}) {
+      $OPT{$name} += $value;
+    }
+    else {
+      $OPT{$name} = $value;
+    }
+  }
+  else {
+    $OPT{$name} = $value;
+  }
+  1;
+}
