@@ -4,6 +4,7 @@ use Getopt::Long qw/:config auto_abbrev auto_version auto_help bundling/;
 use Scalar::Util qw/looks_like_number/;
 use IPC::Run qw/run/;
 use File::Spec;
+use Cwd qw/realpath/;
 use File::Copy::Recursive qw/rcopy/;
 use File::Temp;
 use strict;
@@ -64,7 +65,7 @@ for my $a (@ARGV) {
   $munge_a =~ s|/|__|g;
   $munge_a =~ s|\.|~|g;
   if (-e $a && ! -d $a) {
-    rcopy($a, File::Spec->catfile($MODEL_TOOL_TMP, $munge_a)) or die "copy: for '$a', $!";
+    rcopy($a, File::Spec->catfile($MODEL_TOOL_TMP, $munge_a)) or die "rcopy: for '$a', $!";
   }
   push @ARGD, File::Spec->catfile('wrk',$munge_a);
 }
@@ -76,22 +77,37 @@ my @cmd = ($DOCKER,
 	   '--name', $MODEL_TOOL_TMP,
 	   '-t',
 	   '-v',
-	   File::Spec->rel2abs($MODEL_TOOL_TMP).':/opns/wrk',
-	   $MODEL_TOOL_DOCKER);
+	   realpath($MODEL_TOOL_TMP).':/opns/wrk');
+
+my $v = delete $OPT_DOCKER{dir};
+if (defined $v) {
+  push @cmd, '-v', join(':',realpath($OPT{dir}),"/opns/dirs");
+  $OPT_DOCKER{dir} = 'dirs';
+}
+push @cmd, $MODEL_TOOL_DOCKER;
 
 for (keys %OPT_DOCKER) {
   if (looks_like_number $OPT_DOCKER{$_}) {
     push @cmd, ("--$_") x $OPT_DOCKER{$_};
   }
   else {
-    push @cmd, "--$_", $OPT_DOCKER{$_};
+    if ($_ eq 'dir') {
+      push @cmd, "--$_", "/opns/dirs";
+    }
+    else {
+      push @cmd, "--$_", $OPT_DOCKER{$_};
+    }
   }
 }
+
 push @cmd, @ARGD;
 
 # run docker run
 
+say "docker cmd: ".join(' ',@cmd);
 run \@cmd;
+
+
 
 # return outputs to expected places
 

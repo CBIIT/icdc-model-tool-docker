@@ -38,7 +38,8 @@ SKIP : {
   lives_ok { run(\@cmd, \$in, \$out, \$err) } "It runs";
   like ($out, qr/FATAL: Nothing to do!/, "Emit 'Nothing to do'");
   like ($out, qr/Usage:.*model-tool.*--dry-run/s, "Emit usage hints");
-#  diag $err;
+  #  diag $err;
+  diag $out;
 
   try {
     unlink map {File::Spec->catfile($dir, $_)} @testoutf;
@@ -50,21 +51,32 @@ SKIP : {
   lives_ok { run( [$tool, '-g', File::Spec->catfile($dir,'try.svg'), @descfiles],
 		  \$in, \$out, \$err ) } "-g";
   diag $err if $err;
+  diag $out;
   ok(( -e File::Spec->catfile($dir,'try.svg')), "svg created");
 
   $in = $out = $err = '';
-  lives_ok { run( [$tool, '-j', File::Spec->catfile($dir,'try.json'), @descfiles, '-d',
-		   File::Spec->catdir($dir,'schema')],
+  lives_ok { run( [$tool, '-j', File::Spec->catfile($dir,'try.json'),
+		   '-d', 
+		   File::Spec->catdir($sampdir,'schema'),
+		   # $dir,
+		     @descfiles ],
 		  \$in, \$out, \$err ) } "-j";
   diag $err if $err;
+  diag $out;
   ok(( -e File::Spec->catfile($dir,'try.json')), "json created");
   diag $err if $err;
   open my $j, File::Spec->catfile($dir,'try.json') or die "Can't open try.json: $!";
   {
     local $/;
     my $str = <$j>;
-    lives_ok { $j = decode_json $str } "smells like json";
-    ok grep( /^_definitions.yaml$/, keys %$j), "_definitions.yaml present";
+    my $json;
+    lives_ok { $json = decode_json $str } "smells like json";
+    if ($json) {
+      ok grep( /^_definitions.yaml$/, keys %$json), "_definitions.yaml present";
+    }
+    else {
+      fail "bad json";
+    }
   }
 }
 
