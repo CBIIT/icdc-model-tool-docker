@@ -11,10 +11,13 @@ my $build = Module::Build->new(
   build_requires => {
     'Module::Build' => 0,
     'Test::More' => 0,
+    'Test::Exception' => 0,
     'Try::Tiny' => 0,
     'IPC::Run' => 0,
+    'JSON' => 0,
   },
   requires => {
+    'IPC::Run' => 0,
     'Scalar::Util' => 0,
     'File::Copy::Recursive' => 0,
   },
