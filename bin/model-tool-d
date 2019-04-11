@@ -19,7 +19,7 @@ our $VERSION="0.1";
 # DOCKER_CMD - system's docker command (defaul: 'docker')
 
 my $MODEL_TOOL_KEEP_TMP = $ENV{MODEL_TOOL_KEEP_TMP} // 0;
-my $MODEL_TOOL_DOCKER = $ENV{MODEL_TOOL_DOCKER} // "maj1/dayjob:icdc-model-tool-app";
+my $MODEL_TOOL_DOCKER = $ENV{MODEL_TOOL_DOCKER} // "maj1/icdc:icdc-model-tool-app";
 my $MODEL_TOOL_TMP = File::Temp->newdir("ICDC_XXXX", CLEANUP=>!$MODEL_TOOL_KEEP_TMP) or die "Can't create temp directory: $!";
 
 my $DOCKER = $ENV{DOCKER_CMD} // 'docker';

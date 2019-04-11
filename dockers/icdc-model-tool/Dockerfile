@@ -1,9 +1,9 @@
-FROM maj1/dayjob:graphviz-perlbrew
+FROM maj1/icdc:graphviz-perlbrew
 
 MAINTAINER Mark A. Jensen <mark -dot- jensen -at- nih -dot- com>
 ARG perl=perl-5.24.4
-ARG mtbranch=gen3-020519
-ARG model_tool_git=CBIIT/icdc-model-tools.git
+ARG mtbranch=master
+ARG model_tool_git=CBIIT/icdc-model-tool.git
 ARG user_and_token=''
 
 ENV DEBIAN_FRONTEND noninteractive

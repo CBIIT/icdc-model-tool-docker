@@ -1,4 +1,4 @@
-FROM maj1/dayjob:icdc-model-tool
+FROM maj1/icdc:icdc-model-tool
 MAINTAINER Mark A. Jensen <mark -dot- jensen -at- nih -dot- com>
 
 WORKDIR /opns
