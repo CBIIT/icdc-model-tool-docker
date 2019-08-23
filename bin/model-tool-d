@@ -20,20 +20,18 @@ our $VERSION="0.1";
 
 my $MODEL_TOOL_KEEP_TMP = $ENV{MODEL_TOOL_KEEP_TMP} // 0;
 my $MODEL_TOOL_DOCKER = $ENV{MODEL_TOOL_DOCKER} // "maj1/icdc:icdc-model-tool-app";
-my $MODEL_TOOL_TMP = File::Temp->newdir("ICDC_XXXX", CLEANUP=>!$MODEL_TOOL_KEEP_TMP) or die "Can't create temp directory: $!";
+my $MODEL_TOOL_TMP = File::Temp->newdir("ICDC_XXXX", CLEANUP=>!($MODEL_TOOL_KEEP_TMP)) or die "Can't create temp directory: $!";
 
 my $DOCKER = $ENV{DOCKER_CMD} // 'docker';
 my %OPT_SPEC = (
-  'schemas|s=s' => \&record_options,
   'graph|g=s' => \&record_options,
-  'bigjson|j|b=s' => \&record_options,
-  'dir|d=s' => \&record_options,
+  'table|T=s' => \&record_options,
   'verbose|v+' => \&record_options,
   'warn|W' => \&record_options,
   'dry-run|dry_run' => \&record_options,
   'all-nodes|all_nodes|a!' => \&record_options,
  );
-my @OUTPUT_OPTS = qw/schemas graph bigjson/;
+my @OUTPUT_OPTS = qw/graph table/;
 
 my %OPT;
 my %OPT_DOCKER;

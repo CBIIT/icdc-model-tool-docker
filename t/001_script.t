@@ -55,29 +55,15 @@ SKIP : {
   ok(( -e File::Spec->catfile($dir,'try.svg')), "svg created");
 
   $in = $out = $err = '';
-  lives_ok { run( [$tool, '-j', File::Spec->catfile($dir,'try.json'),
-		   '-d', 
-		   File::Spec->catdir($sampdir,'schema'),
+  lives_ok { run( [$tool, '-T', File::Spec->catfile($dir,'try.txt'),
 		   # $dir,
 		     @descfiles ],
-		  \$in, \$out, \$err ) } "-j";
+		  \$in, \$out, \$err ) } "-T";
   diag $err if $err;
   diag $out;
-  ok(( -e File::Spec->catfile($dir,'try.json')), "json created");
+  ok(( -e File::Spec->catfile($dir,'try.txt')), "txt file (tables) created");
   diag $err if $err;
-  open my $j, File::Spec->catfile($dir,'try.json') or die "Can't open try.json: $!";
-  {
-    local $/;
-    my $str = <$j>;
-    my $json;
-    lives_ok { $json = decode_json $str } "smells like json";
-    if ($json) {
-      ok grep( /^_definitions.yaml$/, keys %$json), "_definitions.yaml present";
-    }
-    else {
-      fail "bad json";
-    }
-  }
+
 }
 
 done_testing;
