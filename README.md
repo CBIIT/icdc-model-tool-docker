@@ -15,8 +15,6 @@ You need Docker installed on your machine. Recommend [Docker Desktop (Community 
 
 * Get a Docker Hub ID if you don't have one already. Just follow the sign-in/create account steps in the desktop app, or go to [https://hub.docker.com/](https://hub.docker.com/).
 
-* Send me (@majensen) your Docker Hub ID, so I can add you to the docker repo (so the script will be able to pull the docker container)
-
 * Clone this repo
 
         git clone https://github.com/CBIIT/icdc-model-tool-docker.git 
@@ -40,4 +38,22 @@ You need Docker installed on your machine. Recommend [Docker Desktop (Community 
         ./Build test
         sudo ./Build install
 
-  * Won't work until I add you to the Docker repo. Let me know on Slack if you have troubles.
+  * Try it!
+
+        $ model-tool-d # should output..
+
+        FATAL: Nothing to do!
+         (2019/08/23 21:57:59 in main::)
+        Usage:
+              model-tool [-g <graph-out-file>] [-s <output-dir>] [-j <json-out-file>] 
+                         [-T <table-out-file>] <input.yaml> [<input2.yaml> ...]
+                 [-d dir_to_search [-d another_dir...]]
+              -g : create an SVG of model defined in input.yamls
+              -T : output a table of nodes and properties
+              -a : output all nodes, including unlinked nodes
+              -v : verbosity (-v little ... -vvvv lots)
+              -W : show all warnings ( = -vvv )
+              --dry-run : emit log msg, but no output files
+
+
+
